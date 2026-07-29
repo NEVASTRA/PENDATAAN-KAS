@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nevastra-v1';
+const CACHE_NAME = 'nevastra-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,7 +8,8 @@ const urlsToCache = [
   '/style.css',
   '/app.js',
   '/firebase-config.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/icon.svg'
 ];
 
 self.addEventListener('install', event => {
@@ -17,6 +18,21 @@ self.addEventListener('install', event => {
       .then(cache => {
         return cache.addAll(urlsToCache);
       })
+  );
+});
+
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
 });
 
