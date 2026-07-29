@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendataan Pembayaran</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <button id="logoutBtn" class="btn btn-pink">Logout</button>
+
+    <h1 class="glitch-text">DATA_ENTRY :: <span id="classDisplay"></span></h1>
+
+    <div class="container">
+        <h2>Input Pembayaran</h2>
+        <div id="successAlert" class="alert" style="background: var(--accent-cyan); border-color: var(--neon-cyan);">Data berhasil disimpan!</div>
+        
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="absen">NOMOR ABSEN</label>
+                <select id="absen" required>
+                    <option value="">-- Pilih Absen --</option>
+                    <option value="1">Absen 1</option>
+                    <option value="2">Absen 2</option>
+                    <option value="3">Absen 3</option>
+                    <option value="4">Absen 4</option>
+                    <option value="5">Absen 5</option>
+                    <option value="6">Absen 6</option>
+                    <option value="7">Absen 7</option>
+                    <option value="8">Absen 8</option>
+                    <option value="9">Absen 9</option>
+                    <option value="10">Absen 10</option>
+                    <option value="11">Absen 11</option>
+                    <option value="12">Absen 12</option>
+                    <option value="13">Absen 13</option>
+                    <option value="14">Absen 14</option>
+                    <option value="15">Absen 15</option>
+                    <option value="16">Absen 16</option>
+                    <option value="17">Absen 17</option>
+                    <option value="18">Absen 18</option>
+                    <option value="19">Absen 19</option>
+                    <option value="20">Absen 20</option>
+                    <option value="21">Absen 21</option>
+                    <option value="22">Absen 22</option>
+                    <option value="23">Absen 23</option>
+                    <option value="24">Absen 24</option>
+                    <option value="25">Absen 25</option>
+                    <option value="26">Absen 26</option>
+                    <option value="27">Absen 27</option>
+                    <option value="28">Absen 28</option>
+                    <option value="29">Absen 29</option>
+                    <option value="30">Absen 30</option>
+                    <option value="31">Absen 31</option>
+                    <option value="32">Absen 32</option>
+                    <option value="33">Absen 33</option>
+                    <option value="34">Absen 34</option>
+                    <option value="35">Absen 35</option>
+                    <option value="36">Absen 36</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="bulan">BULAN PEMBAYARAN</label>
+                <select id="bulan" required>
+                    <option value="">-- Pilih Bulan --</option>
+                    <option value="Juli">Juli</option>
+                    <option value="Agustus">Agustus</option>
+                    <option value="September">September</option>
+                    <option value="Oktober">Oktober</option>
+                    <option value="November">November</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>PILIH MINGGU (Bisa lebih dari 1 - @Rp 10.000)</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox" name="minggu" value="Minggu 1"> Minggu 1</label>
+                    <label class="checkbox-item"><input type="checkbox" name="minggu" value="Minggu 2"> Minggu 2</label>
+                    <label class="checkbox-item"><input type="checkbox" name="minggu" value="Minggu 3"> Minggu 3</label>
+                    <label class="checkbox-item"><input type="checkbox" name="minggu" value="Minggu 4"> Minggu 4</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">Transmit Data</button>
+        </form>
+    </div>
+
+    <div class="container admin-box">
+        <h2>Status Pembayaran Kelas <span id="classStatusDisplay"></span></h2>
+        <div class="table-wrapper">
+            <table id="statusTable">
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>Absen</th>
+                        <th>Bulan</th>
+                        <th>Minggu Dibayar</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data realtime masuk ke sini -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, ref, push, onValue } from './firebase-config.js';
+        import { checkLogin, logout } from './app.js';
+
+        const user = checkLogin();
+        if(user && user.role === 'admin') {
+            window.location.href = 'admin.html';
+        }
+
+        if(user) {
+            document.getElementById('classDisplay').textContent = user.class;
+            document.getElementById('classStatusDisplay').textContent = user.class;
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        
+        // Form Submit
+        document.getElementById('paymentForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const absen = document.getElementById('absen').value;
+            const bulan = document.getElementById('bulan').value;
+            
+            const checkboxes = document.querySelectorAll('input[name="minggu"]:checked');
+            if(checkboxes.length === 0) {
+                alert('Pilih setidaknya 1 minggu pembayaran!');
+                return;
+            }
+
+            let mingguList = [];
+            checkboxes.forEach(cb => mingguList.push(cb.value));
+
+            const total = mingguList.length * 10000;
+            const now = new Date();
+
+            const dataToSave = {
+                kelas: user.class,
+                absen: absen,
+                bulan: bulan,
+                minggu: mingguList,
+                total: total,
+                waktu: now.toLocaleString('id-ID'),
+                timestamp: now.getTime(),
+                diinputOleh: user.username
+            };
+
+            const dbRef = ref(db, 'pembayaran/' + user.class);
+            push(dbRef, dataToSave).then(() => {
+                const alertBox = document.getElementById('successAlert');
+                alertBox.style.display = 'block';
+                setTimeout(() => alertBox.style.display = 'none', 3000);
+                
+                // Reset form
+                document.getElementById('paymentForm').reset();
+            }).catch((error) => {
+                console.error("Error saving data:", error);
+                alert("Gagal menyimpan data!");
+            });
+        });
+
+        // Realtime Listener
+        if(user) {
+            const classRef = ref(db, 'pembayaran/' + user.class);
+            onValue(classRef, (snapshot) => {
+                const data = snapshot.val();
+                const tbody = document.querySelector('#statusTable tbody');
+                tbody.innerHTML = '';
+
+                if(data) {
+                    // Sort descending by timestamp (newest first)
+                    const dataArray = Object.values(data).sort((a,b) => b.timestamp - a.timestamp);
+
+                    dataArray.forEach(item => {
+                        let mingguBadges = item.minggu.map(m => `<span class="badge">${m}</span>`).join('');
+                        
+                        let tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${item.waktu}</td>
+                            <td>Absen ${item.absen}</td>
+                            <td>${item.bulan}</td>
+                            <td>${mingguBadges}</td>
+                            <td>Rp ${item.total.toLocaleString('id-ID')}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `<td colspan="5" style="text-align:center;">Belum ada data pembayaran di kelas ini.</td>`;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Rekap Pembayaran</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <button id="logoutBtn" class="btn btn-pink">Logout</button>
+
+    <h1 class="glitch-text">GLOBAL_RECORDS :: ADMIN</h1>
+
+    <div class="container admin-box">
+        <div class="nav-buttons">
+            <h2>Rekap Seluruh Kelas</h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="sortData" style="padding: 8px; background: #111; color: var(--neon-cyan); border: 1px solid var(--neon-cyan); border-radius: 4px; outline: none; cursor: pointer;">
+                    <option value="time_desc">Waktu (Terbaru)</option>
+                    <option value="time_asc">Waktu (Terlama)</option>
+                    <option value="class_asc">Kelas (A-Z)</option>
+                    <option value="class_desc">Kelas (Z-A)</option>
+                </select>
+                <a href="install.html" class="btn btn-pink" style="text-decoration:none; text-align:center;">Install PWA</a>
+            </div>
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="adminTable">
+                <thead>
+                    <tr>
+                        <th>Waktu (Realtime)</th>
+                        <th>Kelas</th>
+                        <th>Absen</th>
+                        <th>Bulan</th>
+                        <th>Minggu Dibayar</th>
+                        <th>Total</th>
+                        <th>Diinput Oleh</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data realtime masuk ke sini -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, ref, onValue } from './firebase-config.js';
+        import { checkLogin, logout } from './app.js';
+
+        const user = checkLogin();
+        if(user && user.role !== 'admin') {
+            window.location.href = 'input.html';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+
+        let allRecordsGlobal = [];
+
+        const allDataRef = ref(db, 'pembayaran');
+        onValue(allDataRef, (snapshot) => {
+            const data = snapshot.val();
+            let allRecords = [];
+
+            if(data) {
+                // data is grouped by class (pembayaran/XII-1, etc)
+                for(let kelasKey in data) {
+                    let kelasRecords = data[kelasKey];
+                    for(let recordId in kelasRecords) {
+                        allRecords.push(kelasRecords[recordId]);
+                    }
+                }
+            }
+            
+            allRecordsGlobal = allRecords;
+            renderTable();
+        });
+
+        document.getElementById('sortData').addEventListener('change', renderTable);
+
+        function renderTable() {
+            const tbody = document.querySelector('#adminTable tbody');
+            tbody.innerHTML = '';
+
+            if(allRecordsGlobal.length > 0) {
+                let records = [...allRecordsGlobal];
+                const sortBy = document.getElementById('sortData').value;
+
+                if (sortBy === 'time_desc') {
+                    records.sort((a,b) => b.timestamp - a.timestamp);
+                } else if (sortBy === 'time_asc') {
+                    records.sort((a,b) => a.timestamp - b.timestamp);
+                } else if (sortBy === 'class_asc') {
+                    records.sort((a,b) => {
+                        if(a.kelas === b.kelas) return b.timestamp - a.timestamp;
+                        return a.kelas.localeCompare(b.kelas);
+                    });
+                } else if (sortBy === 'class_desc') {
+                    records.sort((a,b) => {
+                        if(a.kelas === b.kelas) return b.timestamp - a.timestamp;
+                        return b.kelas.localeCompare(a.kelas);
+                    });
+                }
+
+                records.forEach(item => {
+                    let mingguBadges = item.minggu.map(m => `<span class="badge">${m}</span>`).join('');
+                    
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.waktu}</td>
+                        <td style="color:var(--neon-cyan)">${item.kelas}</td>
+                        <td>Absen ${item.absen}</td>
+                        <td>${item.bulan}</td>
+                        <td>${mingguBadges}</td>
+                        <td>Rp ${item.total.toLocaleString('id-ID')}</td>
+                        <td style="font-size:0.8rem; color:var(--neon-pink)">[${item.diinputOleh}]</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } else {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="7" style="text-align:center;">Belum ada data pembayaran.</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+    </script>
+</body>
+</html>
