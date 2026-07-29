@@ -20,18 +20,21 @@
         <button id="installBtn" class="btn" style="display: none;">Install App</button>
         <p id="installMsg" style="color:var(--neon-pink); display:none; margin-top:10px;">Aplikasi sudah terpasang atau browser Anda tidak mendukung instalasi PWA secara langsung.</p>
 
-        <a href="admin.html" class="btn btn-pink" style="margin-top: 20px; display:inline-block; text-decoration:none;">Kembali ke Admin</a>
+        <a href="index.html" class="btn btn-pink" style="margin-top: 20px; display:inline-block; text-decoration:none;">Kembali ke Halaman Utama</a>
     </div>
 
     <script type="module">
         import { checkLogin, logout } from './app.js';
         
         const user = checkLogin();
-        if(user && user.role !== 'admin') {
-            window.location.href = 'input.html';
+        
+        const logoutBtn = document.getElementById('logoutBtn');
+        if(user) {
+            logoutBtn.addEventListener('click', logout);
+        } else {
+            logoutBtn.style.display = 'none';
         }
 
-        document.getElementById('logoutBtn').addEventListener('click', logout);
 
         // PWA Installation Logic
         let deferredPrompt;

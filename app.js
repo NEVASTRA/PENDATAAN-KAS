@@ -23,7 +23,8 @@ export const users = [
 export function checkLogin() {
   const loggedInUser = localStorage.getItem('currentUser');
   if (!loggedInUser) {
-    if (!window.location.href.includes('index.html') && !window.location.href.endsWith('/')) {
+    const href = window.location.href.toLowerCase();
+    if (!href.includes('index') && !href.includes('install') && !href.endsWith('/')) {
         window.location.href = 'index.html';
     }
   }
