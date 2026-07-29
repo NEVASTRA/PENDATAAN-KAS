@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nevastra-v3';
+const CACHE_NAME = 'nevastra-v4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,8 +8,7 @@ const urlsToCache = [
   '/style.css',
   '/app.js',
   '/firebase-config.js',
-  '/manifest.json',
-  '/icon.svg'
+  '/manifest.json'
 ];
 
 self.addEventListener('install', event => {
