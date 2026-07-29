@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nevastra-v6';
+const CACHE_NAME = 'nevastra-v7';
 const urlsToCache = [
   '/',
   '/index.html',
